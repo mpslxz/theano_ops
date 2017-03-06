@@ -14,3 +14,6 @@ def elu(x):
 
 def sigmoid(x):
     return T.nnet.sigmoid(x)
+
+def softmax(x):
+    return T.nnet.softmax(x)
