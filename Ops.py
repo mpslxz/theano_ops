@@ -48,8 +48,8 @@ def upsample_3d(inpt, ds):
     return T.tile(inpt, ds)
 
 
-def flatten(inpt):
-    return T.flatten(inpt)
+def flatten(inpt, ndim=2):
+    return T.flatten(inpt, ndim)
 
 
 def dense(inpt, nb_in, nb_out, layer_name=''):
@@ -59,7 +59,7 @@ def dense(inpt, nb_in, nb_out, layer_name=''):
 
     b = theano.shared(np.asarray(np.random.normal(loc=0.0, scale=1.0, size=[nb_out]), dtype=theano.config.floatX),
                       name='b_dense_' + layer_name, borrow=True)
-    return T.dot(T.transpose(w), inpt) + b, [w, b]
+    return T.dot(inpt, w) + b, [w, b]
 
 
 def max_pool_2d(input, ds, ignore_border=False):
