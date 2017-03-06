@@ -25,9 +25,23 @@ def conv_3d(inpt, (output_channel, input_channel, depth, rows, columns), stride=
         np.asarray(np.random.normal(loc=0.0, scale=1.0, size=(filter_shape[0],)), dtype=theano.config.floatX),
         name='b_conv3d_' + layer_name, borrow=True)
 
-    if mode == 'full':
-        return dnn_conv3d(inpt, w, border_mode='full', subsample=stride) + b.dimshuffle('x', 0, 'x', 'x', 'x'), [w, b]
-    return dnn_conv3d(inpt, w, border_mode='valid', subsample=stride) + b.dimshuffle('x', 0, 'x', 'x', 'x'), [w, b]
+
+    return dnn_conv3d(inpt, w, border_mode=mode, subsample=stride) + b.dimshuffle('x', 0, 'x', 'x', 'x'), [w, b]
+
+
+def conv_2d(inpt, (output_channel, input_channel, rows, columns), stride=(1,1), layer_name='', mode='valid'):
+    filter_shape = (output_channel, input_channel, rows, columns)
+    receptive_field_size = rows* columns
+
+    w = theano.shared(np.asarray(
+        np.random.normal(loc=0, scale=np.sqrt(2. / ((input_channel + output_channel) * receptive_field_size)),
+                         size=filter_shape),
+        dtype=theano.config.floatX), name='w_conv2d_' + layer_name, borrow=True)
+    b = theano.shared(
+        np.asarray(np.random.normal(loc=0.0, scale=1.0, size=(filter_shape[0],)), dtype=theano.config.floatX),
+        name='b_conv2d_' + layer_name, borrow=True)
+
+    return T.nnet.conv2d(input=inpt, filters=w, border_mode=mode, subsample=stride) + b.dimshuffle('x', 0, 'x', 'x'), [w, b]
 
 
 def upsample_3d(inpt, ds):
@@ -46,6 +60,10 @@ def dense(inpt, nb_in, nb_out, layer_name=''):
     b = theano.shared(np.asarray(np.random.normal(loc=0.0, scale=1.0, size=[nb_out]), dtype=theano.config.floatX),
                       name='b_dense_' + layer_name, borrow=True)
     return T.dot(T.transpose(w), inpt) + b, [w, b]
+
+
+def max_pool_2d(input, ds, ignore_border=False):
+    return pool_2d(input=input, ds=ds, ignore_border=ignore_border)
 
 
 def max_pool_3d(input, ds, ignore_border=False):
