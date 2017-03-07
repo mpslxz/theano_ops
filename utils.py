@@ -25,3 +25,14 @@ def downsample_volume(volume, ratio=0.5, axis=0):
 
 def normalize(nd_array):
     return (nd_array - nd_array.min()) / (nd_array.max() - nd_array.min())
+
+def to_categorical(y, nb_classes=None):
+    """From Keras
+    """
+    y = np.array(y, dtype='int').ravel()
+    if not nb_classes:
+        nb_classes = np.max(y) + 1
+    n = y.shape[0]
+    categorical = np.zeros((n, nb_classes))
+    categorical[np.arange(n), y] = 1
+    return categorical
