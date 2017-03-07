@@ -23,4 +23,5 @@ def downsample_volume(volume, ratio=0.5, axis=0):
         return downsampled.swapaxes(0,1).swapaxes(1,2)
     return np.array(downsampled)
 
-
+def normalize(nd_array):
+    return (nd_array - nd_array.min()) / (nd_array.max() - nd_array.min())
