@@ -137,6 +137,6 @@ def max_pool_3d(input, ds, ignore_border=False):
 
 
 def dropout(inpt, prob=0.25):
-    rng = shared_randomstreams.RandomStreams(np.random.RandomState(0).randint(9e5))
-    mask = rng.binomial(n=1, p=1 - prob, size=inpt.shape)
-    return inpt * mask
+    rng = shared_randomstreams.RandomStreams(np.random.RandomState(0).randint(int(9e+5)))
+    mask = rng.binomial(n=1, p=1 - prob, size=inpt.shape, dtype=theano.config.floatX)
+    return T.mul(inpt, mask)
