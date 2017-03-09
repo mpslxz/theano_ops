@@ -1,19 +1,19 @@
+import theano
 import pickle
-import sys
+import sys, os
+import theano.tensor as T
+import numpy as np
 from abc import abstractmethod
 from progressbar import ProgressBar, Bar, ETA, Percentage
 
-from theano_ops.Ops import *
-from theano_ops.activations import *
-from theano_ops.optimizers import *
-from theano_ops.custom_costs import *
-from theano_ops.utils import *
 import config
 
 
 class TheanoModel(object):
     
     def __init__(self, batch_size, input_shape, optimizer, metrics):
+        if not os.path.exists(config.ckpt_dir):
+            os.mkdir(config.ckpt_dir)
         sys.setrecursionlimit(0x100000)
         self.INPUT_SHAPE = input_shape
         self.BATCH_SIZE = batch_size
@@ -21,6 +21,7 @@ class TheanoModel(object):
         self.history = []
         self.optimizer = optimizer
         self.metrics = metrics
+        self.mode = T.compile.get_default_mode()
 
         self._def_tensors()
         self._def_arch()
@@ -60,11 +61,12 @@ class TheanoModel(object):
 
 
     def _def_functions(self):
-        self.batch_test_fcn = theano.function([self.x, self.y], outputs=self.acc)
+        self.batch_test_fcn = theano.function([self.x, self.y], outputs=self.acc, mode=self.mode)
         self.batch_train_fcn = theano.function([self.x, self.y],
                                           outputs=self.output_metrics,
-                                          updates=self.optimizer.updates(cost=self.cost, params=self.params))
-        self.predict_fcn = theano.function([self.x], outputs=self.outputs)
+                                          updates=self.optimizer.updates(cost=self.cost, params=self.params),
+                                               mode=self.mode)
+        self.predict_fcn = theano.function([self.x], outputs=self.outputs, mode=self.mode)
 
 
     def get_shape(self, layer):
@@ -78,7 +80,7 @@ class TheanoModel(object):
                y[randomizer[iteration*self.BATCH_SIZE: (iteration + 1) * self.BATCH_SIZE]]
 
 
-    def train(self, x_train, y_train, x_validation, y_validation, nb_epochs, verbose=True, gpu_memory=False):
+    def train(self, x_train, y_train, x_validation=None, y_validation=None, nb_epochs=100, verbose=True, gpu_memory=False):
 
         nb_batches = len(x_train) / self.BATCH_SIZE
         nb_samples = len(x_train)
@@ -86,7 +88,7 @@ class TheanoModel(object):
         if gpu_memory:
             x_train_shared= theano.shared(x_train)
             y_train_shared = theano.shared(y_train)
-            self.train_fcn_gpu = theano.function([self.indexer],
+            self._train_fcn_gpu = theano.function([self.indexer],
                                               outputs=self.output_metrics,
                                               updates=self.optimizer.updates(cost=self.cost, params=self.params),
                                               givens={self.x: x_train_shared[self.indexer*self.BATCH_SIZE:
@@ -105,18 +107,19 @@ class TheanoModel(object):
                 global_steps = pbar(global_steps)
             for step in global_steps:
                 if gpu_memory:
-                    vals += [self.train_fcn_gpu(step)]
+                    vals += [self._train_fcn_gpu(step)]
                 else:
                     x, y = self._get_batch(x_train, y_train, step, self.randomizer)
                     vals += [self.batch_train_fcn(x, y)]
 
-            validation_acc = self.test(x_validation, y_validation)
             train_vals = [(name, "{:.4f}".format(val)) for name, val in zip(self.metrics, list(np.array(vals).mean(axis=0)))]
             self.history += train_vals
-            self.history += [('val_acc', "{:.4f}".format(validation_acc))]
             for res in train_vals:
                 print "train", res[0], res[1]
-            print "validation acc {:.4f}".format(validation_acc)
+            if x_validation is not None:
+                validation_acc = self.test(x_validation, y_validation)
+                self.history += [('val_acc', "{:.4f}".format(validation_acc))]
+                print "validation acc {:.4f}".format(validation_acc)
             if i % 10 == 0:
                 print "writing model checkpoint to " + config.ckpt_dir
                 self.freeze()
