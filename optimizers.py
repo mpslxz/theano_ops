@@ -7,18 +7,23 @@ class RMSProp(object):
     """
     RMSProp with nesterov momentum and gradient rescaling
     """
-    def __init__(self, params, lr=1e-4, momentum=0.0, rescale=5.):
-        self.running_square_ = [theano.shared(np.zeros_like(p.get_value()))
-                                for p in params]
-        self.running_avg_ = [theano.shared(np.zeros_like(p.get_value()))
-                             for p in params]
-        self.memory_ = [theano.shared(np.zeros_like(p.get_value()))
-                        for p in params]
+    def __init__(self, lr=1e-4, momentum=0.0, rescale=5.):
+        self.not_initialized = True
         self.lr = lr
         self. momentum = momentum
         self.rescale = rescale
 
     def updates(self, cost, params):
+        if self.not_initialized:
+            self.running_square_ = [theano.shared(np.zeros_like(p.get_value()))
+                                    for p in params]
+            self.running_avg_ = [theano.shared(np.zeros_like(p.get_value()))
+                                 for p in params]
+
+            self.memory_ = [theano.shared(np.zeros_like(p.get_value()))
+                        for p in params]
+            self.not_initialized = False
+
         grads = T.grad(cost, params)
         grad_norm = T.sqrt(sum(map(lambda x: T.sqr(x).sum(), grads)))
         not_finite = T.or_(T.isnan(grad_norm), T.isinf(grad_norm))
@@ -52,13 +57,17 @@ class RMSProp(object):
 
 
 class SGDNesterov(object):
-    def __init__(self, params, lr=1e-4, momentum=0.0):
-        self.memory_ = [theano.shared(np.zeros_like(p.get_value()))
-                        for p in params]
+    def __init__(self, lr=1e-4, momentum=0.0):
+        self.not_initialized = True
         self.lr = lr
         self.momentum = momentum
 
     def updates(self, cost, params):
+        if self.not_initialized:
+            self.memory_ = [theano.shared(np.zeros_like(p.get_value()))
+                            for p in params]
+            self.not_initialized = False
+
         grads = T.grad(cost, params)
         updates = []
         for n, (param, grad) in enumerate(zip(params, grads)):
