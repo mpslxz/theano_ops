@@ -94,7 +94,8 @@ class TheanoModel(object):
                                               givens={self.x: x_train_shared[self.indexer*self.BATCH_SIZE:
                                                       (1+self.indexer)*self.BATCH_SIZE],
                                                       self.y: y_train_shared[self.indexer*self.BATCH_SIZE:
-                                                      (1+self.indexer)*self.BATCH_SIZE]})
+                                                      (1+self.indexer)*self.BATCH_SIZE]},
+                                              mode=self.mode)
 
         for i in range(nb_epochs):
             print "\niteration: {} of {}".format(i + 1, nb_epochs)
