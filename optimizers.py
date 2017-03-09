@@ -8,13 +8,13 @@ class RMSProp(object):
     RMSProp with nesterov momentum and gradient rescaling
     """
     def __init__(self, lr=1e-4, momentum=0.0, rescale=5.):
-        self.not_initialized = True
+        self._initialized = False
         self.lr = lr
-        self. momentum = momentum
+        self.momentum = momentum
         self.rescale = rescale
 
     def updates(self, cost, params):
-        if self.not_initialized:
+        if not self._initialized:
             self.running_square_ = [theano.shared(np.zeros_like(p.get_value()))
                                     for p in params]
             self.running_avg_ = [theano.shared(np.zeros_like(p.get_value()))
@@ -22,7 +22,7 @@ class RMSProp(object):
 
             self.memory_ = [theano.shared(np.zeros_like(p.get_value()))
                         for p in params]
-            self.not_initialized = False
+            self._initialized = True
 
         grads = T.grad(cost, params)
         grad_norm = T.sqrt(sum(map(lambda x: T.sqr(x).sum(), grads)))
@@ -58,15 +58,15 @@ class RMSProp(object):
 
 class SGDNesterov(object):
     def __init__(self, lr=1e-4, momentum=0.0):
-        self.not_initialized = True
+        self._initialized = False
         self.lr = lr
         self.momentum = momentum
 
     def updates(self, cost, params):
-        if self.not_initialized:
+        if not self._initialized:
             self.memory_ = [theano.shared(np.zeros_like(p.get_value()))
                             for p in params]
-            self.not_initialized = False
+            self._initialized = True
 
         grads = T.grad(cost, params)
         updates = []
