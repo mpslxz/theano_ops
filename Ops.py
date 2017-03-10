@@ -61,12 +61,12 @@ def dense(inpt, nb_in, nb_out, layer_name=''):
     return T.dot(inpt, w) + b, [w, b]
 
 
-def pool_2d(input, ds, ignore_border=False, mode='max'):
-    return pool2d(input=input, ds=ds, ignore_border=ignore_border, mode=mode)
+def pool_2d(input, ws, ignore_border=False, mode='max'):
+    return pool2d(input=input, ws=ws, ignore_border=ignore_border, mode=mode)
 
 
-def pool_3d(input, ds, ignore_border=False, mode='max'):
-    return pool3d(input=input, ds=ds, ignore_border=ignore_border, mode=mode)
+def pool_3d(input, ws, ignore_border=False, mode='max'):
+    return pool3d(input=input, ws=ws, ignore_border=ignore_border, mode=mode)
 
 
 def dropout(inpt, prob=0.25):
