@@ -114,7 +114,6 @@ class TheanoModel(object):
                     print "\niteration {} of {}".format(iteration + 1, nb_epochs)
                     pbar.start()
             if (iteration + 1) % 10 == 0:
-                print "writing model checkpoint to " + config.ckpt_dir
                 self.freeze()
 
 
@@ -132,6 +131,7 @@ class TheanoModel(object):
         return self.predict_fcn(x)
 
 
-    def freeze(self):
-        with open(config.ckpt_dir+'model_snapshot.ckpt', 'wb') as checkpoint_file:
+    def freeze(self, idx=None):
+        file_name = config.ckpt_dir+'model_snapshot.ckpt' if idx is None else config.ckpt_dir+'model_snapshot{}.ckpt'.format(idx)
+        with open(file_name, 'wb') as checkpoint_file:
             pickle.dump(self, checkpoint_file)
