@@ -1,7 +1,7 @@
 import numpy as np
 import theano
 import theano.tensor as T
-from theano.tensor.signal.pool import pool_2d, pool_3d
+from theano.tensor.signal.pool import pool_2d as pool2d, pool_3d as pool3d
 from theano.tensor import shared_randomstreams
 
 
@@ -62,11 +62,11 @@ def dense(inpt, nb_in, nb_out, layer_name=''):
 
 
 def pool_2d(input, ds, ignore_border=False, mode='max'):
-    return pool_2d(input=input, ds=ds, ignore_border=ignore_border, mode=mode)
+    return pool2d(input=input, ds=ds, ignore_border=ignore_border, mode=mode)
 
 
 def pool_3d(input, ds, ignore_border=False, mode='max'):
-    return pool_3d(input=input, ds=ds, ignore_border=ignore_border, mode=mode)
+    return pool3d(input=input, ds=ds, ignore_border=ignore_border, mode=mode)
 
 
 def dropout(inpt, prob=0.25):
