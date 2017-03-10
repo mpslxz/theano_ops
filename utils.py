@@ -36,3 +36,19 @@ def to_categorical(y, nb_classes=None):
     categorical = np.zeros((n, nb_classes))
     categorical[np.arange(n), y] = 1
     return categorical
+
+class BatchFactory(object):
+    def __init__(self, batch_size, nb_samples, iterations):
+        self.BATCH_SIZE = batch_size
+        self.nb_samples = nb_samples
+        self.iterations = iterations
+
+    def _index_generator(self):
+        for i in range(self.iterations):
+            indices = np.random.permutation(self.nb_samples)
+            for j in range(self.nb_samples/self.BATCH_SIZE):
+                yield indices[slice(j*self.BATCH_SIZE, (j+1)*self.BATCH_SIZE)]
+
+    def generate_batch(self, X, Y):
+        for samples in self._index_generator():
+            yield X[samples], Y[samples]
