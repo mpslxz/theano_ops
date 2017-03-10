@@ -3,7 +3,6 @@ import theano
 import theano.tensor as T
 from theano.tensor.signal.pool import pool_2d
 from theano.tensor import shared_randomstreams
-from theano.sandbox.cuda.dnn import dnn_conv3d
 
 
 def bn(inpt, scale=1.0, shift=0.0):
@@ -26,7 +25,7 @@ def conv_3d(inpt, (output_channel, input_channel, depth, rows, columns), stride=
         name='b_conv3d_' + layer_name, borrow=True)
 
 
-    return dnn_conv3d(inpt, w, border_mode=mode, subsample=stride) + b.dimshuffle('x', 0, 'x', 'x', 'x'), [w, b]
+    return T.nnet.conv3d(inpt, w, border_mode=mode, subsample=stride) + b.dimshuffle('x', 0, 'x', 'x', 'x'), [w, b]
 
 
 def conv_2d(inpt, (output_channel, input_channel, rows, columns), stride=(1,1), layer_name='', mode='valid'):
