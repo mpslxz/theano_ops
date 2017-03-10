@@ -76,11 +76,6 @@ class TheanoModel(object):
         return _get_shape(dummy).shape
 
 
-    def _get_batch(self, x, y, iteration, randomizer):
-        return x[randomizer[iteration*self.BATCH_SIZE: (iteration + 1) * self.BATCH_SIZE]], \
-               y[randomizer[iteration*self.BATCH_SIZE: (iteration + 1) * self.BATCH_SIZE]]
-
-
     def train(self, x_train, y_train, x_validation=None, y_validation=None, nb_epochs=100):
 
         nb_samples = len(x_train)
