@@ -7,6 +7,7 @@ from abc import abstractmethod
 from progressbar import ProgressBar, Bar, ETA, Percentage
 
 import config
+from utils import BatchFactory
 
 
 class TheanoModel(object):
@@ -80,48 +81,39 @@ class TheanoModel(object):
                y[randomizer[iteration*self.BATCH_SIZE: (iteration + 1) * self.BATCH_SIZE]]
 
 
-    def train(self, x_train, y_train, x_validation=None, y_validation=None, nb_epochs=100, verbose=True, gpu_memory=False):
+    def train(self, x_train, y_train, x_validation=None, y_validation=None, nb_epochs=100):
 
-        nb_batches = len(x_train) / self.BATCH_SIZE
         nb_samples = len(x_train)
+        nb_batches = nb_samples / self.BATCH_SIZE
 
-        if gpu_memory:
-            x_train_shared= theano.shared(x_train)
-            y_train_shared = theano.shared(y_train)
-            self._train_fcn_gpu = theano.function([self.indexer],
-                                              outputs=self.output_metrics,
-                                              updates=self.optimizer.updates(cost=self.cost, params=self.params),
-                                              givens={self.x: x_train_shared[self.indexer*self.BATCH_SIZE:
-                                                      (1+self.indexer)*self.BATCH_SIZE],
-                                                      self.y: y_train_shared[self.indexer*self.BATCH_SIZE:
-                                                      (1+self.indexer)*self.BATCH_SIZE]},
-                                              mode=self.mode)
+        batch_engine = BatchFactory(batch_size=self.BATCH_SIZE, nb_samples=nb_samples, iterations=nb_epochs)
+        batcher = batch_engine.generate_batch(X=x_train, Y=y_train)
 
-        for i in range(nb_epochs):
-            print "\niteration: {} of {}".format(i + 1, nb_epochs)
-            self.randomizer = np.random.permutation(nb_samples)
-            vals = []
-
-            global_steps = range(nb_batches)
-            if verbose:
-                pbar = ProgressBar(widgets=[Percentage(), ' ', Bar('='), ' ', ETA()], maxval=nb_batches)
-                global_steps = pbar(global_steps)
-            for step in global_steps:
-                if gpu_memory:
-                    vals += [self._train_fcn_gpu(step)]
-                else:
-                    x, y = self._get_batch(x_train, y_train, step, self.randomizer)
-                    vals += [self.batch_train_fcn(x, y)]
-
-            train_vals = [(name, "{:.4f}".format(val)) for name, val in zip(self.metrics, list(np.array(vals).mean(axis=0)))]
-            self.history += train_vals
-            for res in train_vals:
-                print "train", res[0], res[1]
-            if x_validation is not None:
-                validation_acc = self.test(x_validation, y_validation)
-                self.history += [('val_acc', "{:.4f}".format(validation_acc))]
-                print "validation acc {:.4f}".format(validation_acc)
-            if i % 10 == 0:
+        vals = []
+        pbar = ProgressBar(widgets=[Percentage(), ' ', Bar('='), ' ', ETA()], maxval=nb_batches)
+        print "\niteration {} of {}".format(1, nb_epochs)
+        pbar.start()
+        iteration = 0
+        for ind, (x, y) in enumerate(batcher):
+            vals += [self.batch_train_fcn(x, y)]
+            pbar.update((ind + 1) % nb_batches)
+            if (ind + 1) % nb_batches == 0:
+                iteration += 1
+                pbar.finish()
+                train_vals = [(name, "{:.4f}".format(val)) for name, val in
+                              zip(self.metrics, list(np.array(vals).mean(axis=0)))]
+                self.history += train_vals
+                for res in train_vals:
+                    print "train", res[0], res[1]
+                if x_validation is not None:
+                    validation_acc = self.test(x_validation, y_validation)
+                    self.history += [('val_acc', "{:.4f}".format(validation_acc))]
+                    print "validation acc {:.4f}".format(validation_acc)
+                vals =[]
+                if ind != nb_epochs * nb_batches - 1:
+                    print "\niteration {} of {}".format(iteration + 1, nb_epochs)
+                    pbar.start()
+            if (iteration + 1) % 10 == 0:
                 print "writing model checkpoint to " + config.ckpt_dir
                 self.freeze()
 
