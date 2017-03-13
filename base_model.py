@@ -13,6 +13,7 @@ from utils import BatchFactory
 class TheanoModel(object):
     
     def __init__(self, batch_size, input_shape, optimizer, metrics):
+        print("initializing model")
         if not os.path.exists(config.ckpt_dir):
             os.mkdir(config.ckpt_dir)
         sys.setrecursionlimit(0x100000)
@@ -41,7 +42,6 @@ class TheanoModel(object):
 
     @abstractmethod
     def _def_tensors(self):
-
         self.x = None
         self.y = None
         self.indexer = T.lscalar()
@@ -62,6 +62,7 @@ class TheanoModel(object):
 
 
     def _def_functions(self):
+        print("compiling model")
         self.batch_test_fcn = theano.function([self.x, self.y], outputs=self.acc, mode=self.mode)
         self.batch_train_fcn = theano.function([self.x, self.y],
                                           outputs=self.output_metrics,
@@ -71,7 +72,7 @@ class TheanoModel(object):
 
 
     def get_shape(self, layer):
-        dummy = np.random.random(self.INPUT_SHAPE).astype(np.float32)
+        dummy = np.random.random(self.INPUT_SHAPE).astype(theano.config.floatX)
         _get_shape = theano.function([self.x], layer)
         return _get_shape(dummy).shape
 
@@ -113,11 +114,10 @@ class TheanoModel(object):
 
 
     def test(self, x_test, y_test):
-        nb_batches = len(x_test) / self.BATCH_SIZE
-        randomizer = np.arange(len(x_test))
+        batch_engine = BatchFactory(batch_size=self.BATCH_SIZE, nb_samples=len(x_test), iterations=1)
+        batcher = batch_engine.generate_batch(X=x_test, Y=y_test)
         vals = []
-        for j in range(nb_batches):
-            x_, y_ = self._get_batch(x_test, y_test, j,randomizer)
+        for idx, (x_, y_) in enumerate(batcher):
             vals += [self.batch_test_fcn(x_, y_)]
         return np.array(vals).mean()
 
