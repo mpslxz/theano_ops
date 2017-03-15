@@ -31,14 +31,12 @@ class TheanoModel(object):
         self._def_outputs()
         self._def_functions()
 
-
     def _def_outputs(self):
         self.output_metrics = []
         if 'acc' in self.metrics:
             self.output_metrics.insert(self.metrics.index('acc'), self.acc)
         if 'loss' in self.metrics:
             self.output_metrics.insert(self.metrics.index('loss'), self.cost)
-
 
     @abstractmethod
     def _def_tensors(self):
@@ -47,19 +45,16 @@ class TheanoModel(object):
         self.indexer = T.lscalar()
         raise NotImplementedError
 
-
     @abstractmethod
     def _def_arch(self):
         self.outputs = None
         raise NotImplementedError
-
 
     @abstractmethod
     def _def_cost_acc(self):
         self.cost = None
         self.acc = None
         raise NotImplementedError
-
 
     def _def_functions(self):
         print("compiling model")
@@ -70,14 +65,12 @@ class TheanoModel(object):
                                                mode=self.mode)
         self.predict_fcn = theano.function([self.x], outputs=self.outputs, mode=self.mode)
 
-
     def get_shape(self, layer):
         dummy = np.random.random(self.INPUT_SHAPE).astype(theano.config.floatX)
         _get_shape = theano.function([self.x], layer)
         return _get_shape(dummy).shape
 
-
-    def train(self, x_train, y_train, x_validation=None, y_validation=None, nb_epochs=100):
+    def train(self, x_train, y_train, x_validation=None, y_validation=None, nb_epochs=100, overwrite=True):
 
         nb_samples = len(x_train)
         nb_batches = np.ceil(1.*nb_samples / self.BATCH_SIZE)
@@ -110,8 +103,10 @@ class TheanoModel(object):
                     print "\niteration {} of {}".format(iteration + 1, nb_epochs)
                     pbar.start()
             if (iteration + 1) % 10 == 0:
-                self.freeze()
-
+                if overwrite:
+                    self.freeze()
+                else:
+                    self.freeze(iteration+1)
 
     def test(self, x_test, y_test):
         batch_engine = BatchFactory(batch_size=self.BATCH_SIZE, nb_samples=len(x_test), iterations=1)
@@ -121,7 +116,6 @@ class TheanoModel(object):
             vals += [self.batch_test_fcn(x_, y_)]
         return np.array(vals).mean()
 
-
     def predict(self, x):
         batch_engine = BatchFactory(batch_size=self.BATCH_SIZE, nb_samples=len(x), iterations=1, randomizer=False)
         batcher = batch_engine.generate_batch(X=x)
@@ -129,7 +123,6 @@ class TheanoModel(object):
         for idx, x_ in enumerate(batcher):
             predictions += [self.predict_fcn(x_)]
         return np.array(predictions)
-
 
     def freeze(self, idx=None):
         file_name = config.ckpt_dir+'model_snapshot.ckpt' if idx is None else config.ckpt_dir+'model_snapshot{}.ckpt'.format(idx)
