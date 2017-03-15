@@ -80,7 +80,7 @@ class TheanoModel(object):
     def train(self, x_train, y_train, x_validation=None, y_validation=None, nb_epochs=100):
 
         nb_samples = len(x_train)
-        nb_batches = nb_samples / self.BATCH_SIZE
+        nb_batches = np.ceil(1.*nb_samples / self.BATCH_SIZE)
 
         batch_engine = BatchFactory(batch_size=self.BATCH_SIZE, nb_samples=nb_samples, iterations=nb_epochs)
         batcher = batch_engine.generate_batch(X=x_train, Y=y_train)
@@ -123,8 +123,8 @@ class TheanoModel(object):
 
 
     def predict(self, x):
-        batch_engine = BatchFactory(batch_size=self.BATCH_SIZE, nb_samples=len(x), iterations=1)
-        batcher = batch_engine.generate_batch(X=x, Y=None)
+        batch_engine = BatchFactory(batch_size=self.BATCH_SIZE, nb_samples=len(x), iterations=1, randomizer=False)
+        batcher = batch_engine.generate_batch(X=x)
         predictions = []
         for idx, x_ in enumerate(batcher):
             predictions += [self.predict_fcn(x_)]
