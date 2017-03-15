@@ -123,7 +123,12 @@ class TheanoModel(object):
 
 
     def predict(self, x):
-        return self.predict_fcn(x)
+        batch_engine = BatchFactory(batch_size=self.BATCH_SIZE, nb_samples=len(x), iterations=1)
+        batcher = batch_engine.generate_batch(X=x, Y=None)
+        predictions = []
+        for idx, x_ in enumerate(batcher):
+            predictions += [self.predict_fcn(x_)]
+        return np.array(predictions)
 
 
     def freeze(self, idx=None):

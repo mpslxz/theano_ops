@@ -24,7 +24,8 @@ def downsample_volume(volume, ratio=0.5, axis=0):
     return np.array(downsampled)
 
 def normalize(nd_array):
-    return (nd_array - nd_array.min()) / (nd_array.max() - nd_array.min())
+    return (nd_array - nd_array.mean())/nd_array.std()
+    # return (nd_array - nd_array.min()) / (nd_array.max() - nd_array.min())
 
 def to_categorical(y, nb_classes=None):
     """From Keras
@@ -38,17 +39,27 @@ def to_categorical(y, nb_classes=None):
     return categorical
 
 class BatchFactory(object):
-    def __init__(self, batch_size, nb_samples, iterations):
+    def __init__(self, batch_size, nb_samples, iterations, randomizer=True):
         self.BATCH_SIZE = batch_size
         self.nb_samples = nb_samples
         self.iterations = iterations
+        self.randomizer = randomizer
 
     def _index_generator(self):
         for i in range(self.iterations):
-            indices = np.random.permutation(self.nb_samples)
-            for j in range(self.nb_samples/self.BATCH_SIZE):
-                yield indices[slice(j*self.BATCH_SIZE, (j+1)*self.BATCH_SIZE)]
+            if self.randomizer:
+                indices = np.random.permutation(self.nb_samples)
+            else:
+                indices = np.arange(self.nb_samples)
+            for indexer in range(self.nb_samples/self.BATCH_SIZE):
+                yield indices[slice(indexer*self.BATCH_SIZE, (indexer+1)*self.BATCH_SIZE)]
+            if self.nb_samples % self.BATCH_SIZE != 0:
+                indexer = self.nb_samples / self.BATCH_SIZE
+                yield indices[slice(indexer*self.BATCH_SIZE, self.nb_samples)]
 
-    def generate_batch(self, X, Y):
+    def generate_batch(self, X, Y=None):
         for samples in self._index_generator():
-            yield X[samples], Y[samples]
+            if Y is None:
+                yield X[samples]
+            else:
+                yield X[samples], Y[samples]
