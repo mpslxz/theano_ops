@@ -107,6 +107,7 @@ class TheanoModel(object):
                     self.freeze()
                 else:
                     self.freeze(iteration+1)
+        self.freeze()
 
     def test(self, x_test, y_test):
         batch_engine = BatchFactory(batch_size=self.BATCH_SIZE, nb_samples=len(x_test), iterations=1)
