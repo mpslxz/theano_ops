@@ -70,6 +70,10 @@ class TheanoModel(object):
         _get_shape = theano.function([self.x], layer)
         return _get_shape(dummy).shape
 
+    def get_params(self, layer_name):
+        params = [i for i in self.params if i.name.split('_')[2] == layer_name]
+        return params
+
     def train(self, x_train, y_train, x_validation=None, y_validation=None, nb_epochs=100, overwrite=True):
 
         nb_samples = len(x_train)
