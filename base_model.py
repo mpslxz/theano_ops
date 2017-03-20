@@ -122,11 +122,17 @@ class TheanoModel(object):
         return np.array(vals).mean()
 
     def predict(self, x):
+        print "Predict"
         batch_engine = BatchFactory(batch_size=self.BATCH_SIZE, nb_samples=len(x), iterations=1, randomizer=False)
         batcher = batch_engine.generate_batch(X=x)
         predictions = []
+        nb_batches = np.ceil(1.*len(x)/self.BATCH_SIZE)
+        pbar = ProgressBar(widgets=[Percentage(), ' ', Bar('=')], maxval=nb_batches)
+        pbar.start()
         for idx, x_ in enumerate(batcher):
             predictions.extend(self.predict_fcn(x_))
+            pbar.update(idx)
+        pbar.finish()
         return np.array(predictions)
 
     def freeze(self, idx=None):
