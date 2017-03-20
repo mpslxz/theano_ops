@@ -122,7 +122,7 @@ class TheanoModel(object):
         batcher = batch_engine.generate_batch(X=x)
         predictions = []
         for idx, x_ in enumerate(batcher):
-            predictions += [self.predict_fcn(x_)]
+            predictions.extend(self.predict_fcn(x_))
         return np.array(predictions)
 
     def freeze(self, idx=None):
