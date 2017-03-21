@@ -1,5 +1,5 @@
 import theano
-import pickle
+import cPickle as pickle
 import sys, os
 import theano.tensor as T
 import numpy as np
@@ -88,9 +88,11 @@ class TheanoModel(object):
         pbar.start()
         iteration = 0
         for ind, (x, y) in enumerate(batcher):
+            ready_to_freeze = False
             vals += [self.batch_train_fcn(x, y)]
             pbar.update((ind + 1) % nb_batches)
             if (ind + 1) % nb_batches == 0:
+                ready_to_freeze = True
                 iteration += 1
                 pbar.finish()
                 train_vals = [(name, "{:.4f}".format(val)) for name, val in
@@ -106,7 +108,7 @@ class TheanoModel(object):
                 if ind != nb_epochs * nb_batches - 1:
                     print "\niteration {} of {}".format(iteration + 1, nb_epochs)
                     pbar.start()
-            if (iteration + 1) % 10 == 0:
+            if (iteration + 1) % 10 == 0 and ready_to_freeze:
                 if overwrite:
                     self.freeze()
                 else:
