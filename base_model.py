@@ -11,8 +11,7 @@ from utils import BatchFactory
 
 
 class TheanoModel(object):
-    
-    def __init__(self, batch_size, input_shape, optimizer, metrics):
+    def __init__(self, batch_size, input_shape, optimizer, metrics, lmbd=0):
         print("initializing model")
         if not os.path.exists(config.ckpt_dir):
             os.mkdir(config.ckpt_dir)
@@ -24,7 +23,9 @@ class TheanoModel(object):
         self.optimizer = optimizer
         self.metrics = metrics
         self.mode = T.compile.get_default_mode()
-
+        self.lmbd = lmbd
+        self.to_regularize = []
+        
         self._def_tensors()
         self._def_arch()
         self._def_cost_acc()
@@ -88,11 +89,9 @@ class TheanoModel(object):
         pbar.start()
         iteration = 0
         for ind, (x, y) in enumerate(batcher):
-            ready_to_freeze = False
             vals += [self.batch_train_fcn(x, y)]
             pbar.update((ind + 1) % nb_batches)
             if (ind + 1) % nb_batches == 0:
-                ready_to_freeze = True
                 iteration += 1
                 pbar.finish()
                 train_vals = [(name, "{:.4f}".format(val)) for name, val in
@@ -105,14 +104,15 @@ class TheanoModel(object):
                     self.history += [('val_acc', "{:.4f}".format(validation_acc))]
                     print "validation acc {:.4f}".format(validation_acc)
                 vals =[]
+                if (iteration + 1) % 10 == 0:
+                    if overwrite:
+                        self.freeze()
+                    else:
+                        self.freeze(iteration + 1)
                 if ind != nb_epochs * nb_batches - 1:
                     print "\niteration {} of {}".format(iteration + 1, nb_epochs)
                     pbar.start()
-            if (iteration + 1) % 10 == 0 and ready_to_freeze:
-                if overwrite:
-                    self.freeze()
-                else:
-                    self.freeze(iteration+1)
+
         self.freeze()
 
     def test(self, x_test, y_test):
