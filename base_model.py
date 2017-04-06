@@ -28,7 +28,8 @@ class TheanoModel(object):
         self.to_regularize = []
         
         self._def_tensors()
-        self._def_arch(init_params[0])
+        params = init_params[0] if init_params is not None else init_params
+        self._def_arch(params)
         self._def_cost_acc()
         self._def_outputs()
         self._def_functions()
@@ -107,7 +108,7 @@ class TheanoModel(object):
                     self.history += [('val_acc', "{:.4f}".format(validation_acc))]
                     print "validation acc {:.4f}".format(validation_acc)
                 vals =[]
-                if (iteration + 1) % 1 == 0:
+                if (iteration + 1) % 10 == 0:
                     if overwrite:
                         self.freeze()
                     else:
