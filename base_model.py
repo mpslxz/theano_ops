@@ -1,6 +1,7 @@
 import theano
-import cPickle as pickle
+import pickle
 import sys, os
+import numpy as np
 import theano.tensor as T
 import numpy as np
 from abc import abstractmethod
@@ -11,7 +12,7 @@ from utils import BatchFactory
 
 
 class TheanoModel(object):
-    def __init__(self, batch_size, input_shape, optimizer, metrics, lmbd=0):
+    def __init__(self, batch_size, input_shape, optimizer, metrics, lmbd=0, init_params=None):
         print("initializing model")
         if not os.path.exists(config.ckpt_dir):
             os.mkdir(config.ckpt_dir)
@@ -19,7 +20,7 @@ class TheanoModel(object):
         self.INPUT_SHAPE = input_shape
         self.BATCH_SIZE = batch_size
         self.params = []
-        self.history = []
+        self.history = [] if init_params is None else init_params[1]
         self.optimizer = optimizer
         self.metrics = metrics
         self.mode = T.compile.get_default_mode()
@@ -27,7 +28,7 @@ class TheanoModel(object):
         self.to_regularize = []
         
         self._def_tensors()
-        self._def_arch()
+        self._def_arch(init_params[0])
         self._def_cost_acc()
         self._def_outputs()
         self._def_functions()
@@ -47,7 +48,7 @@ class TheanoModel(object):
         raise NotImplementedError
 
     @abstractmethod
-    def _def_arch(self):
+    def _def_arch(self, init_params=None):
         self.outputs = None
         raise NotImplementedError
 
@@ -71,9 +72,11 @@ class TheanoModel(object):
         _get_shape = theano.function([self.x], layer)
         return _get_shape(dummy).shape
 
-    def get_params(self, layer_name):
-        params = [i for i in self.params if i.name.split('_')[2] == layer_name]
-        return params
+    def get_params(self, layer_name, param_list):
+        if param_list is None:
+            return None
+        params = [i for i in param_list if i.name.split('_')[2] == layer_name]
+        return None if len(params) == 0 else params
 
     def train(self, x_train, y_train, x_validation=None, y_validation=None, nb_epochs=100, overwrite=True):
 
@@ -104,7 +107,7 @@ class TheanoModel(object):
                     self.history += [('val_acc', "{:.4f}".format(validation_acc))]
                     print "validation acc {:.4f}".format(validation_acc)
                 vals =[]
-                if (iteration + 1) % 10 == 0:
+                if (iteration + 1) % 1 == 0:
                     if overwrite:
                         self.freeze()
                     else:
@@ -138,6 +141,9 @@ class TheanoModel(object):
         return np.array(predictions)
 
     def freeze(self, idx=None):
-        file_name = config.ckpt_dir+'model_snapshot.ckpt' if idx is None else config.ckpt_dir+'model_snapshot{}.ckpt'.format(idx)
-        with open(file_name, 'wb') as checkpoint_file:
-            pickle.dump(self, checkpoint_file)
+        file_name = config.ckpt_dir+'model_snapshot' if idx is None else config.ckpt_dir+'model_snapshot{}'.format(idx)
+        np.save(file_name, (self.params, self.history))
+
+    @staticmethod
+    def restore_params(file_name):
+        return list(np.load(file_name))
