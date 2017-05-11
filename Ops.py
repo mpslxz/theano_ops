@@ -84,3 +84,33 @@ def dropout(inpt, prob=0.25):
     rng = shared_randomstreams.RandomStreams(np.random.RandomState(0).randint(int(9e+5)))
     mask = rng.binomial(n=1, p=1 - prob, size=inpt.shape, dtype=theano.config.floatX)
     return T.mul(inpt, mask)
+
+
+def zero_pad_3d(inpt, padding=(1, 1, 1)):
+    input_shape = inpt.shape
+    output_shape = (input_shape[0],
+                    input_shape[1],
+                    input_shape[2] + 2 * padding[0],
+                    input_shape[3] + 2 * padding[1],
+                    input_shape[4] + 2 * padding[2])
+    output = T.zeros(output_shape)
+    indices = (slice(None),
+               slice(None),
+               slice(padding[0], input_shape[2] + padding[0]),
+               slice(padding[1], input_shape[3] + padding[1]),
+               slice(padding[2], input_shape[4] + padding[2]))
+    return T.set_subtensor(output[indices], inpt)
+
+
+def zero_pad_2d(inpt, padding=(1, 1)):
+    input_shape = inpt.shape
+    output_shape = (input_shape[0],
+                    input_shape[1],
+                    input_shape[2] + 2 * padding[0],
+                    input_shape[3] + 2 * padding[1])
+    output = T.zeros(output_shape)
+    indices = (slice(None),
+               slice(None),
+               slice(padding[0], input_shape[2] + padding[0]),
+               slice(padding[1], input_shape[3] + padding[1]))
+    return T.set_subtensor(output[indices], inpt)
