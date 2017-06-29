@@ -86,6 +86,7 @@ def dropout(inpt, prob=0.25):
     return T.mul(inpt, mask)
 
 
+
 def scale(inpt, scale=1.0, shift=0.0, layer_name='', init_params=None):
     """Elemwise multiplication by gamma, add beta.
     Perhaps works when initialized as scale=1 and shift=0
@@ -97,3 +98,33 @@ def scale(inpt, scale=1.0, shift=0.0, layer_name='', init_params=None):
         gamma = init_params[0]
         beta = init_params[1]
     return T.mul(inpt, gamma) + beta, [gamma, beta]
+
+def zero_pad_3d(inpt, padding=(1, 1, 1)):
+    input_shape = inpt.shape
+    output_shape = (input_shape[0],
+                    input_shape[1],
+                    input_shape[2] + 2 * padding[0],
+                    input_shape[3] + 2 * padding[1],
+                    input_shape[4] + 2 * padding[2])
+    output = T.zeros(output_shape)
+    indices = (slice(None),
+               slice(None),
+               slice(padding[0], input_shape[2] + padding[0]),
+               slice(padding[1], input_shape[3] + padding[1]),
+               slice(padding[2], input_shape[4] + padding[2]))
+    return T.set_subtensor(output[indices], inpt)
+
+
+def zero_pad_2d(inpt, padding=(1, 1)):
+    input_shape = inpt.shape
+    output_shape = (input_shape[0],
+                    input_shape[1],
+                    input_shape[2] + 2 * padding[0],
+                    input_shape[3] + 2 * padding[1])
+    output = T.zeros(output_shape)
+    indices = (slice(None),
+               slice(None),
+               slice(padding[0], input_shape[2] + padding[0]),
+               slice(padding[1], input_shape[3] + padding[1]))
+    return T.set_subtensor(output[indices], inpt)
+>>>>>>> ac5a36a64fbea0978a6dbf13770417c47726c4f3
