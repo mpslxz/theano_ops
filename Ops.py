@@ -84,3 +84,16 @@ def dropout(inpt, prob=0.25):
     rng = shared_randomstreams.RandomStreams(np.random.RandomState(0).randint(int(9e+5)))
     mask = rng.binomial(n=1, p=1 - prob, size=inpt.shape, dtype=theano.config.floatX)
     return T.mul(inpt, mask)
+
+
+def scale(inpt, scale=1.0, shift=0.0, layer_name='', init_params=None):
+    """Elemwise multiplication by gamma, add beta.
+    Perhaps works when initialized as scale=1 and shift=0
+    """
+    if init_params is None:
+        gamma = scale * T.ones_like(inpt)
+        beta = shift * T.ones_like(inpt)
+    else:
+        gamma = init_params[0]
+        beta = init_params[1]
+    return T.mul(inpt, gamma) + beta, [gamma, beta]
