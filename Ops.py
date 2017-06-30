@@ -5,9 +5,13 @@ from theano.tensor.signal.pool import pool_2d as pool2d, pool_3d as pool3d
 from theano.tensor import shared_randomstreams
 
 
-def bn(inpt, scale=1.0, shift=0.0, trainable=False):
-    gamma = scale * T.ones_like(inpt)
-    beta = shift * T.ones_like(inpt)
+def bn(inpt, scale=1.0, shift=0.0, trainable=False, init_params=None):
+    if init_params is None:
+        gamma = scale * T.ones_like(inpt)
+        beta = shift * T.ones_like(inpt)
+    else:
+        gamma = init_params[0]
+        beta = init_params[1]
     mean = T.mean(inpt)
     std = T.std(inpt)
     if trainable:
