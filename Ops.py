@@ -5,11 +5,17 @@ from theano.tensor.signal.pool import pool_2d as pool2d, pool_3d as pool3d
 from theano.tensor import shared_randomstreams
 
 
-def bn(inpt, scale=1.0, shift=0.0):
-    gamma = scale * T.ones_like(inpt)
-    beta = shift * T.ones_like(inpt)
+def bn(inpt, scale=1.0, shift=0.0, trainable=False, init_params=None):
+    if init_params is None:
+        gamma = scale * T.ones_like(inpt)
+        beta = shift * T.ones_like(inpt)
+    else:
+        gamma = init_params[0]
+        beta = init_params[1]
     mean = T.mean(inpt)
     std = T.std(inpt)
+    if trainable:
+        return T.nnet.batch_normalization(inputs=inpt, gamma=gamma, beta=beta, mean=mean, std=std), [gamma, beta]
     return T.nnet.batch_normalization(inputs=inpt, gamma=gamma, beta=beta, mean=mean, std=std)
 
 
@@ -67,8 +73,8 @@ def dense(inpt, nb_in, nb_out, layer_name='', init_params=None):
         b = theano.shared(np.asarray(np.random.normal(loc=0.0, scale=1.0, size=[nb_out]), dtype=theano.config.floatX),
                           name='b_dense_' + layer_name, borrow=True)
     else:
-        w=init_params[0]
-        b=init_params[1]
+        w = init_params[0]
+        b = init_params[1]
     return T.dot(inpt, w) + b, [w, b]
 
 
@@ -84,6 +90,19 @@ def dropout(inpt, prob=0.25):
     rng = shared_randomstreams.RandomStreams(np.random.RandomState(0).randint(int(9e+5)))
     mask = rng.binomial(n=1, p=1 - prob, size=inpt.shape, dtype=theano.config.floatX)
     return T.mul(inpt, mask)
+
+
+def scale(inpt, scale=1.0, shift=0.0, layer_name='', init_params=None):
+    """Elemwise multiplication by gamma, add beta.
+    Perhaps works when initialized as scale=1 and shift=0
+    """
+    if init_params is None:
+        gamma = scale * T.ones_like(inpt)
+        beta = shift * T.ones_like(inpt)
+    else:
+        gamma = init_params[0]
+        beta = init_params[1]
+    return T.mul(inpt, gamma) + beta, [gamma, beta]
 
 
 def zero_pad_3d(inpt, padding=(1, 1, 1)):
