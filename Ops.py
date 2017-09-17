@@ -5,10 +5,12 @@ from theano.tensor.signal.pool import pool_2d as pool2d, pool_3d as pool3d
 from theano.tensor import shared_randomstreams
 
 
-def bn(inpt, scale=1.0, shift=0.0, trainable=False, init_params=None):
+def bn(inpt, scale=1.0, shift=0.0, trainable=False, layer_name='', init_params=None):
     if init_params is None:
-        gamma = scale * T.ones_like(inpt)
-        beta = shift * T.ones_like(inpt)
+        gamma = theano.shared(np.asarray(scale * np.ones_like(
+            inpt), dtype=theano.config.floatX), name='gamma_bn_' + layer_name)
+        beta = theano.shared(np.asarray(shift * np.ones_like(
+            inpt), dtype=theano.config.floatX), name='beta_bn_' + layer_name)
     else:
         gamma = init_params[0]
         beta = init_params[1]
@@ -24,31 +26,39 @@ def conv_3d(inpt, (output_channel, input_channel, depth, rows, columns), stride=
         filter_shape = (output_channel, input_channel, depth, rows, columns)
         receptive_field_size = depth * rows * columns
         w = theano.shared(np.asarray(
-            np.random.normal(loc=0, scale=np.sqrt(2. / ((input_channel + output_channel) * receptive_field_size)),
-                             size=filter_shape),
+            np.random.normal(
+                loc=0, scale=np.sqrt(2. / ((input_channel + output_channel) * receptive_field_size)),
+            size=filter_shape),
             dtype=theano.config.floatX), name='w_conv3d_' + layer_name, borrow=True)
         b = theano.shared(
-            np.asarray(np.random.normal(loc=0.0, scale=1.0, size=(filter_shape[0],)), dtype=theano.config.floatX),
+            np.asarray(
+                np.random.normal(
+                    loc=0.0, scale=1.0, size=(
+                        filter_shape[0],)), dtype=theano.config.floatX),
             name='b_conv3d_' + layer_name, borrow=True)
     else:
-        w=init_params[0]
-        b=init_params[1]
+        w = init_params[0]
+        b = init_params[1]
 
     return T.nnet.conv3d(inpt, w, border_mode=mode, subsample=stride) + b.dimshuffle('x', 0, 'x', 'x', 'x'), [w, b]
 
 
-def conv_2d(inpt, (output_channel, input_channel, rows, columns), stride=(1,1), layer_name='', mode='valid', init_params=None):
+def conv_2d(inpt, (output_channel, input_channel, rows, columns), stride=(1, 1), layer_name='', mode='valid', init_params=None):
     if init_params is None:
         filter_shape = (output_channel, input_channel, rows, columns)
-        receptive_field_size = rows* columns
+        receptive_field_size = rows * columns
 
         w = theano.shared(np.asarray(
-            np.random.normal(loc=0, scale=np.sqrt(2. / ((input_channel + output_channel) * receptive_field_size)),
-                             size=filter_shape),
+            np.random.normal(
+                loc=0, scale=np.sqrt(2. / ((input_channel + output_channel) * receptive_field_size)),
+            size=filter_shape),
             dtype=theano.config.floatX), name='w_conv2d_' + layer_name, borrow=True)
 
         b = theano.shared(
-            np.asarray(np.random.normal(loc=0.0, scale=1.0, size=(filter_shape[0],)), dtype=theano.config.floatX),
+            np.asarray(
+                np.random.normal(
+                    loc=0.0, scale=1.0, size=(
+                        filter_shape[0],)), dtype=theano.config.floatX),
             name='b_conv2d_' + layer_name, borrow=True)
     else:
         w = init_params[0]
@@ -66,12 +76,25 @@ def flatten(inpt, ndim=2):
 
 def dense(inpt, nb_in, nb_out, layer_name='', init_params=None):
     if init_params is None:
+<<<<<<< HEAD
         w = theano.shared(np.asarray(np.random.normal(loc=0, scale=np.sqrt(1./nb_out), size=[nb_in, nb_out]),
                                      dtype=theano.config.floatX),
                           name='w_dense_' + layer_name, borrow=True)
+=======
+        w = theano.shared(
+            np.asarray(
+                np.random.normal(
+                    loc=0, scale=np.sqrt(1. / nb_out), size=[nb_in, nb_out]),
+                dtype=theano.config.floatX),
+            name='w_dense_' + layer_name, borrow=True)
+>>>>>>> 66f47b3638a22f1a3c6ce27673625743ac1c19d7
 
-        b = theano.shared(np.asarray(np.random.normal(loc=0.0, scale=1.0, size=[nb_out]), dtype=theano.config.floatX),
-                          name='b_dense_' + layer_name, borrow=True)
+        b = theano.shared(
+            np.asarray(
+                np.random.normal(
+                    loc=0.0, scale=1.0, size=[
+                        nb_out]), dtype=theano.config.floatX),
+            name='b_dense_' + layer_name, borrow=True)
     else:
         w = init_params[0]
         b = init_params[1]
@@ -87,8 +110,10 @@ def pool_3d(input, ws, ignore_border=False, mode='max'):
 
 
 def dropout(inpt, prob=0.25):
-    rng = shared_randomstreams.RandomStreams(np.random.RandomState(0).randint(int(9e+5)))
-    mask = rng.binomial(n=1, p=1 - prob, size=inpt.shape, dtype=theano.config.floatX)
+    rng = shared_randomstreams.RandomStreams(
+        np.random.RandomState(0).randint(int(9e+5)))
+    mask = rng.binomial(
+        n=1, p=1 - prob, size=inpt.shape, dtype=theano.config.floatX)
     return T.mul(inpt, mask)
 
 
