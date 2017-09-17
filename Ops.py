@@ -76,24 +76,15 @@ def flatten(inpt, ndim=2):
 
 def dense(inpt, nb_in, nb_out, layer_name='', init_params=None):
     if init_params is None:
-<<<<<<< HEAD
-        w = theano.shared(np.asarray(np.random.normal(loc=0, scale=np.sqrt(1./nb_out), size=[nb_in, nb_out]),
-                                     dtype=theano.config.floatX),
-                          name='w_dense_' + layer_name, borrow=True)
-=======
         w = theano.shared(
             np.asarray(
                 np.random.normal(
                     loc=0, scale=np.sqrt(1. / nb_out), size=[nb_in, nb_out]),
                 dtype=theano.config.floatX),
             name='w_dense_' + layer_name, borrow=True)
->>>>>>> 66f47b3638a22f1a3c6ce27673625743ac1c19d7
-
-        b = theano.shared(
-            np.asarray(
-                np.random.normal(
-                    loc=0.0, scale=1.0, size=[
-                        nb_out]), dtype=theano.config.floatX),
+        b = theano.shared(np.asarray(np.random.normal(
+            loc=0.0, scale=1.0, size=[nb_out]),
+            dtype=theano.config.floatX),
             name='b_dense_' + layer_name, borrow=True)
     else:
         w = init_params[0]
