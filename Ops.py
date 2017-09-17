@@ -7,10 +7,10 @@ from theano.tensor import shared_randomstreams
 
 def bn(inpt, scale=1.0, shift=0.0, trainable=False, layer_name='', init_params=None):
     if init_params is None:
-        gamma = theano.shared(scale * np.ones_like(
-            inpt), dtype=theano.config.floatX, name='gamma_bn_' + layer_name)
-        beta = theano.shared(shift * np.ones_like(
-            inpt), dtype=theano.config.floatX, name='beta_bn_' + layer_name)
+        gamma = theano.shared(np.asarray(scale * np.ones_like(
+            inpt), dtype=theano.config.floatX), name='gamma_bn_' + layer_name)
+        beta = theano.shared(np.asarray(shift * np.ones_like(
+            inpt), dtype=theano.config.floatX), name='beta_bn_' + layer_name)
     else:
         gamma = init_params[0]
         beta = init_params[1]
