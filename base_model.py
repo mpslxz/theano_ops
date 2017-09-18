@@ -14,7 +14,7 @@ from utils import BatchFactory
 
 class TheanoModel(object):
 
-    def __init__(self, batch_size, input_shape, optimizer, metrics, lmbd=0, init_params=None):
+    def __init__(self, batch_size, input_shape, optimizer, metrics, lmbd=0, init_params=None, compile_functions=True):
         print("initializing model")
         if not os.path.exists(config.ckpt_dir):
             os.mkdir(config.ckpt_dir)
@@ -34,7 +34,8 @@ class TheanoModel(object):
         self._def_arch(params)
         self._def_cost_acc()
         self._def_outputs()
-        self._def_functions()
+        if compile_functions:
+            self._def_functions()
 
     def _def_outputs(self):
         self.output_metrics = []
