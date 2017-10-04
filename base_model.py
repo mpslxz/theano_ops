@@ -85,7 +85,20 @@ class TheanoModel(object):
         params = [i for i in param_list if i.name.split('_')[2] == layer_name]
         return None if len(params) == 0 else params
 
-    def train(self, x_train, y_train, x_validation=None, y_validation=None, nb_epochs=100, overwrite=True):
+    def train(self, x_train, y_train, x_validation=None, y_validation=None, nb_epochs=100, overwrite=True, save_best=False):
+        """Train function based on stochastic gradient descent.
+
+        :param x_train: Training data
+        :param y_train: Training labels
+        :param x_validation: Validation data, can be None
+        :param y_validation: Validation labels, can be None
+        :param nb_epochs: Number of training epochs
+        :param overwrite: Overwrite the model snapshot every 10 epochs, if true
+        :param save_best: Save a snapshot of the best model, if true
+        :returns: None
+        :rtype: None
+
+        """
 
         nb_samples = len(x_train)
         nb_batches = np.ceil(1. * nb_samples / self.BATCH_SIZE)
@@ -100,6 +113,7 @@ class TheanoModel(object):
         print "\niteration {} of {}".format(1, nb_epochs)
         pbar.start()
         iteration = 0
+        best_acc = 0
         for ind, (x, y) in enumerate(batcher):
             vals += [self.batch_train_fcn(x, y)]
             pbar.update((ind + 1) % nb_batches)
@@ -117,7 +131,15 @@ class TheanoModel(object):
                         ('val_acc', "{:.4f}".format(validation_acc))]
                     print "validation acc {:.4f}".format(validation_acc)
                 vals = []
-                if (iteration + 1) % 10 == 0:
+
+                '''TODO: Add other criteria for saving the best model.
+                Currently, it is based on validation accuracy.
+                '''
+
+                if save_best and x_validation is not None and best_acc < validation_acc:
+                    best_acc = validation_acc
+                    self.freeze()
+                elif (iteration + 1) % 10 == 0:
                     if overwrite:
                         self.freeze()
                     else:
