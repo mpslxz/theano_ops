@@ -139,7 +139,7 @@ class TheanoModel(object):
                 if save_best and x_validation is not None and best_acc < validation_acc:
                     best_acc = validation_acc
                     self.freeze()
-                elif (iteration + 1) % 10 == 0:
+                if not save_best and (iteration + 1) % 10 == 0:
                     if overwrite:
                         self.freeze()
                     else:
