@@ -147,8 +147,8 @@ class TheanoModel(object):
                 if ind != nb_epochs * nb_batches - 1:
                     print "\niteration {} of {}".format(iteration + 1, nb_epochs)
                     pbar.start()
-
-        self.freeze()
+        if not save_best:
+            self.freeze()
 
     def test(self, x_test, y_test):
         batch_engine = BatchFactory(
