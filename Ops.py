@@ -68,6 +68,9 @@ def conv_2d(inpt, (output_channel, input_channel, rows, columns), stride=(1, 1),
 
 def upsample_3d(inpt, ds):
     return T.tile(inpt, ds)
+def upsample_2d(inpt, ds):
+    one_dim = T.extra_ops.repeat(inpt, ds, 3)
+    return T.extra_ops.repeat(one_dim, ds, 2)
 
 
 def flatten(inpt, ndim=2):
