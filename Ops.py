@@ -43,6 +43,30 @@ def conv_3d(inpt, (output_channel, input_channel, depth, rows, columns), stride=
     return T.nnet.conv3d(inpt, w, border_mode=mode, subsample=stride) + b.dimshuffle('x', 0, 'x', 'x', 'x'), [w, b]
 
 
+def conv_2d_transpose(inpt, (output_channel, input_channel, rows, columns), stride=(1, 1), layer_name='', mode='valid', init_params=None):
+    if init_params is None:
+        filter_shape = (output_channel, input_channel, rows, columns)
+        output_shape = (output_channel, input_channel, rows + 2, columns + 2)
+        receptive_field_size = rows * columns
+
+        w = theano.shared(np.asarray(
+            np.random.normal(
+                loc=0, scale=np.sqrt(2. / ((input_channel + output_channel) * receptive_field_size)),
+            size=filter_shape),
+            dtype=theano.config.floatX), name='w_conv2d_' + layer_name, borrow=True)
+
+        b = theano.shared(
+            np.asarray(
+                np.random.normal(
+                    loc=0.0, scale=1.0, size=(
+                        filter_shape[0],)), dtype=theano.config.floatX),
+            name='b_conv2d_' + layer_name, borrow=True)
+    else:
+        w = init_params[0]
+        b = init_params[1]
+    return T.nnet.conv2d_transpose(input=inpt, filters=w, output_shape=())
+
+
 def conv_2d(inpt, (output_channel, input_channel, rows, columns), stride=(1, 1), layer_name='', mode='valid', init_params=None):
     if init_params is None:
         filter_shape = (output_channel, input_channel, rows, columns)
