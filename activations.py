@@ -1,5 +1,6 @@
 import theano.tensor as T
 
+
 def relu(x):
     return T.maximum(0.0, x)
 
@@ -9,7 +10,7 @@ def tanh(x):
 
 
 def elu(x):
-    return x if T.gt(0.0, x) else T.exp(x) - 1
+    return T.nnet.elu(x)
 
 
 def sigmoid(x):
