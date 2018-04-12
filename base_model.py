@@ -27,7 +27,7 @@ class TheanoModel(object):
         self.metrics = metrics
         self.mode = T.compile.get_default_mode()
         self.lmbd = lmbd
-        self.stochastic = True
+        self.stochastic = T.iscalar()
         self.to_regularize = []
 
         self._def_tensors()
@@ -66,8 +66,11 @@ class TheanoModel(object):
     def _def_functions(self):
         print("compiling model")
         self.batch_test_fcn = theano.function(
-            [self.x, self.y], givens={self.stochastic: False}, outputs=self.acc, mode=self.mode)
+            [self.x, self.y], givens={self.stochastic: np.array(0, dtype=np.int32)}, outputs=self.acc, mode=self.mode)
         self.batch_train_fcn = theano.function([self.x, self.y],
+                                               givens={self.stochastic:
+                                                       np.array(1,
+                                                                dtype=np.int32)},
                                                outputs=self.output_metrics,
                                                updates=self.optimizer.updates(
                                                cost=self.cost, params=self.params),
