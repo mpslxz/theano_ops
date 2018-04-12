@@ -86,7 +86,7 @@ class TheanoModel(object):
         params = [i for i in param_list if i.name.split('_')[2] == layer_name]
         return None if len(params) == 0 else params
 
-    def train(self, x_train, y_train, x_validation=None, y_validation=None, nb_epochs=100, overwrite=True, save_best=False):
+    def train(self, x_train, y_train, x_validation=None, y_validation=None, nb_epochs=100, overwrite=True, save_best=False, freeze_criterion='max'):
         """Train function based on stochastic gradient descent.
 
         :param x_train: Training data
@@ -115,6 +115,8 @@ class TheanoModel(object):
         pbar.start()
         iteration = 0
         best_acc = 0
+        if freeze_criterion == 'min':
+            best_acc = 1e6
         for ind, (x, y) in enumerate(batcher):
             vals += [self.batch_train_fcn(x, y)]
             pbar.update((ind + 1) % nb_batches)
@@ -137,14 +139,20 @@ class TheanoModel(object):
                 Currently, it is based on validation accuracy.
                 '''
 
-                if save_best and x_validation is not None and best_acc < validation_acc:
-                    best_acc = validation_acc
-                    self.freeze()
-                if not save_best and (iteration + 1) % 10 == 0:
-                    if overwrite:
+                if freeze_criterion == 'max':
+                    if save_best and x_validation is not None and best_acc < validation_acc:
+                        best_acc = validation_acc
                         self.freeze()
-                    else:
-                        self.freeze(iteration + 1)
+                elif freeze_criterion == 'min':
+                    if save_best and x_validation is not None and best_acc > validation_acc:
+                        best_acc = validation_acc
+                        self.freeze()
+                if not save_best and (iteration + 1) % 10 == 0:
+                        if overwrite:
+                            self.freeze()
+                        else:
+                            self.freeze(iteration + 1)
+
                 if ind != nb_epochs * nb_batches - 1:
                     print "\niteration {} of {}".format(iteration + 1, nb_epochs)
                     pbar.start()
