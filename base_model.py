@@ -191,7 +191,7 @@ class TheanoModel(object):
     def param_summary(self):
         for param in self.params:
             if param.name.split('_')[0] == 'w':
-                print param.name + '\t\t\t\t' + param.get_value().shape
+                print param.name + '\t\t\t\t' + str(param.get_value().shape)
                 print 100 * '-'
 
     @staticmethod
