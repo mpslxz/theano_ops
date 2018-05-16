@@ -188,6 +188,12 @@ class TheanoModel(object):
             'model_snapshot{}'.format(idx)
         np.save(file_name, (self.params, self.history))
 
+    def param_summary(self):
+        for param in self.params:
+            if param.name.split('_')[0] == 'w':
+                print param.name + '\t\t\t\t' + param.get_value().shape
+                print 100 * '-'
+
     @staticmethod
     def restore_params(file_name):
         return list(np.load(file_name))
