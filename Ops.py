@@ -21,7 +21,12 @@ def bn(inpt, scale=1.0, shift=0.0, trainable=False, layer_name='', init_params=N
     return T.nnet.batch_normalization(inputs=inpt, gamma=gamma, beta=beta, mean=mean, std=std)
 
 
-def conv_3d(inpt, (output_channel, input_channel, depth, rows, columns), stride=(1, 1, 1), layer_name='', mode='valid', init_params=None):
+def conv_3d(inpt, filter_shapes, stride=(1, 1, 1), layer_name='', mode='valid', init_params=None):
+    output_channel = filter_shapes[0]
+    input_channel = filter_shapes[1]
+    depth = filter_shapes[2]
+    rows = filter_shapes[3]
+    columns = filter_shapes[4]
     if init_params is None:
         filter_shape = (output_channel, input_channel, depth, rows, columns)
         receptive_field_size = depth * rows * columns
@@ -43,7 +48,11 @@ def conv_3d(inpt, (output_channel, input_channel, depth, rows, columns), stride=
     return T.nnet.conv3d(inpt, w, border_mode=mode, subsample=stride) + b.dimshuffle('x', 0, 'x', 'x', 'x'), [w, b]
 
 
-def conv_2d_transpose(inpt, (output_channel, input_channel, rows, columns), stride=(1, 1), layer_name='', mode='valid', init_params=None):
+def conv_2d_transpose(inpt, filter_shapes, stride=(1, 1), layer_name='', mode='valid', init_params=None):
+    output_channel = filter_shapes[0]
+    input_channel = filter_shapes[1]
+    rows = filter_shapes[2]
+    columns = filter_shapes[3]
     if init_params is None:
         filter_shape = (output_channel, input_channel, rows, columns)
         output_shape = (output_channel, input_channel, rows + 2, columns + 2)
@@ -67,7 +76,11 @@ def conv_2d_transpose(inpt, (output_channel, input_channel, rows, columns), stri
     return T.nnet.conv2d_transpose(input=inpt, filters=w, output_shape=())
 
 
-def conv_2d(inpt, (output_channel, input_channel, rows, columns), stride=(1, 1), layer_name='', mode='valid', init_params=None):
+def conv_2d(inpt, filter_shapes, stride=(1, 1), layer_name='', mode='valid', init_params=None):
+    output_channel = filter_shapes[0]
+    input_channel = filter_shapes[1]
+    rows = filter_shapes[2]
+    columns = filter_shapes[3]
     if init_params is None:
         filter_shape = (output_channel, input_channel, rows, columns)
         receptive_field_size = rows * columns
