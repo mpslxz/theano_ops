@@ -1,15 +1,16 @@
 import theano
-import pickle
 import sys
 import os
 import numpy as np
 import theano.tensor as T
-import numpy as np
 from abc import abstractmethod
 from progressbar import ProgressBar, Bar, ETA, Percentage
 
 import config
 from utils import BatchFactory
+from AdaTrain_utils.ScheduleFactory import ScheduleFactory
+from AdaTrain_utils.DataGenFactory import DataGenFactory
+from AdaTrain_utils.BiasedSampling import BiasedSampleFactory
 
 
 class TheanoModel(object):
@@ -166,6 +167,105 @@ class TheanoModel(object):
         for idx, (x_, y_) in enumerate(batcher):
             vals += [self.batch_test_fcn(x_, y_)]
         return np.array(vals).mean()
+
+    def __train_with_batcher(self, batcher, x_validation, y_validation, best_acc, nb_epochs, nb_batches, freeze_criterion, save_best):
+        vals = []
+        iteration = 0
+
+        for ind, (x, y) in enumerate(batcher):
+            vals += [self.batch_train_fcn(x, y)]
+            if (ind + 1) % nb_batches == 0:
+                iteration += 1
+                train_vals = [(name, "{:.4f}".format(val)) for name, val in
+                              zip(self.metrics, list(np.array(vals).mean(axis=0)))]
+                self.history += train_vals
+                for res in train_vals:
+                    print "train", res[0], res[1]
+                if x_validation is not None:
+                    validation_acc = self.test(x_validation, y_validation)
+                    self.history += [
+                        ('val_acc', "{:.4f}".format(validation_acc))]
+                    print "validation acc {:.4f}".format(validation_acc)
+                vals = []
+
+                '''TODO: Add other criteria for saving the best model.
+                Currently, it is based on validation accuracy.
+                '''
+
+                if freeze_criterion == 'max':
+                    if save_best and x_validation is not None and best_acc < validation_acc:
+                        best_acc = validation_acc
+                        self.freeze()
+                elif freeze_criterion == 'min':
+                    if save_best and x_validation is not None and best_acc > validation_acc:
+                        best_acc = validation_acc
+                        self.freeze()
+                if not save_best and (iteration + 1) % 10 == 0:
+                    self.freeze()
+                if ind != nb_epochs * nb_batches - 1:
+                    print "\niteration {} of {}".format(iteration + 1, nb_epochs)
+        return best_acc
+
+    def __get_costs(self, gen_x, gen_y):
+        if gen_x is None:
+            return None
+        costs = []
+        for gen_img, gen_label in zip(gen_x, gen_y):
+            costs.append(1 - self.batch_test_fcn(gen_img[np.newaxis,:],
+                                                 gen_label[np.newaxis,:]))
+        return np.array(costs)
+
+    def AdaTrain(self, x_train,
+                 y_train,
+                 generative_model,
+                 epoch_list,
+                 x_validation=None,
+                 y_validation=None,
+                 batch_fold=1,
+                 deform_labels=True,
+                 area_threshold=None,
+                 biased_sampling=True,
+                 overwrite=True,
+                 save_best=False,
+                 freeze_criterion='max'):
+        best_acc = 0
+        if freeze_criterion == 'min':
+            best_acc = 1e6
+
+        # dynamic training tools
+        SamplingEngine = BiasedSampleFactory(biased_sampling, init_mean=0, init_std=2)
+        DataGenEngine = DataGenFactory(generative_model, deform_labels, area_threshold)
+
+        scheduler = ScheduleFactory(BatchFactory,
+                                    SamplingEngine,
+                                    DataGenEngine,
+                                    epoch_list)
+        batcher, (gen_x, gen_y) = scheduler.get_next_batcher(x_train,
+                                                             y_train,
+                                                             self.BATCH_SIZE,
+                                                             batch_fold)
+        i = 0
+        while batcher is not None:
+            print '\nRound {}'.format(i+1)
+            print '-' * 100
+            print '\niteration 1 of {}'.format(epoch_list[i])
+            best_acc = self.__train_with_batcher(batcher,
+                                                 x_validation,
+                                                 y_validation,
+                                                 best_acc,
+                                                 epoch_list[i],
+                                                 scheduler.get_nb_batches(),
+                                                 freeze_criterion,
+                                                 save_best)
+            scheduler.set_gen_costs(self.__get_costs(gen_x, gen_y))
+            batcher, (gen_x, gen_y) = scheduler.get_next_batcher(x_train,
+                                                                 y_train,
+                                                                 self.BATCH_SIZE,
+                                                                 batch_fold)
+            i += 1
+        if not save_best:
+            self.freeze()
+        np.save('distribution_parameters.npy', scheduler.get_dist_params())
 
     def predict(self, x):
         print "Predict"
