@@ -2,25 +2,32 @@ import numpy as np
 import cv2
 
 
+def get_params(layer_name, param_list):
+    if param_list is None:
+        return None
+    params = [i for i in param_list if i.name.split('_')[-1] == layer_name]
+    return None if len(params) == 0 else params
+
+
 def downsample_volume(volume, ratio=0.5, axis=0):
     downsampled = []
     if axis == 0:
         slice_shape = (int(volume.shape[2]*ratio), int(volume.shape[1]*ratio))
-        downsampled += [cv2.resize(volume[i,:,:],slice_shape) for i in range(volume.shape[0])]
+        downsampled += [cv2.resize(volume[i,:,:], slice_shape) for i in range(volume.shape[0])]
 
     if axis == 1:
         slice_shape = (int(volume.shape[2] * ratio), int(volume.shape[0] * ratio))
-        downsampled += [cv2.resize(volume[:,i,:], slice_shape) for i in range(volume.shape[1])]
+        downsampled += [cv2.resize(volume[:, i,:], slice_shape) for i in range(volume.shape[1])]
 
     if axis == 2:
         slice_shape = (int(volume.shape[1] * ratio), int(volume.shape[0] * ratio))
-        downsampled += [cv2.resize(volume[:,:,i], slice_shape) for i in range(volume.shape[2])]
+        downsampled += [cv2.resize(volume[:,:, i], slice_shape) for i in range(volume.shape[2])]
 
     downsampled = np.array(downsampled)
     if axis == 1:
-        return downsampled.swapaxes(0,1)
+        return downsampled.swapaxes(0, 1)
     if axis == 2:
-        return downsampled.swapaxes(0,1).swapaxes(1,2)
+        return downsampled.swapaxes(0, 1).swapaxes(1, 2)
     return np.array(downsampled)
 
 def normalize(nd_array):
@@ -65,3 +72,4 @@ class BatchFactory(object):
                 yield X[samples]
             else:
                 yield X[samples], Y[samples]
+
