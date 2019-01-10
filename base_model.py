@@ -83,7 +83,7 @@ class TheanoModel(object):
     def get_params(self, layer_name, param_list):
         if param_list is None:
             return None
-        params = [i for i in param_list if i.name.split('_')[2] == layer_name]
+        params = [i for i in param_list if i.name.split('_')[-1] == layer_name]
         return None if len(params) == 0 else params
 
     def train(self, x_train, y_train, x_validation=None, y_validation=None, nb_epochs=100, overwrite=True, save_best=False, freeze_criterion='max'):
@@ -111,7 +111,7 @@ class TheanoModel(object):
         vals = []
         pbar = ProgressBar(
             widgets=[Percentage(), ' ', Bar('='), ' ', ETA()], maxval=nb_batches)
-        print "\niteration {} of {}".format(1, nb_epochs)
+        print("\niteration {} of {}".format(1, nb_epochs))
         pbar.start()
         iteration = 0
         best_acc = 0
@@ -127,12 +127,12 @@ class TheanoModel(object):
                               zip(self.metrics, list(np.array(vals).mean(axis=0)))]
                 self.history += train_vals
                 for res in train_vals:
-                    print "train", res[0], res[1]
+                    print("train", res[0], res[1])
                 if x_validation is not None:
                     validation_acc = self.test(x_validation, y_validation)
                     self.history += [
                         ('val_acc', "{:.4f}".format(validation_acc))]
-                    print "validation acc {:.4f}".format(validation_acc)
+                    print("validation acc {:.4f}".format(validation_acc))
                 vals = []
 
                 '''TODO: Add other criteria for saving the best model.
@@ -154,7 +154,7 @@ class TheanoModel(object):
                             self.freeze(iteration + 1)
 
                 if ind != nb_epochs * nb_batches - 1:
-                    print "\niteration {} of {}".format(iteration + 1, nb_epochs)
+                    print("\niteration {} of {}".format(iteration + 1, nb_epochs))
                     pbar.start()
         if not save_best:
             self.freeze()
@@ -180,12 +180,12 @@ class TheanoModel(object):
                               zip(self.metrics, list(np.array(vals).mean(axis=0)))]
                 self.history += train_vals
                 for res in train_vals:
-                    print "train", res[0], res[1]
+                    print("train", res[0], res[1])
                 if x_validation is not None:
                     validation_acc = self.test(x_validation, y_validation)
                     self.history += [
                         ('val_acc', "{:.4f}".format(validation_acc))]
-                    print "validation acc {:.4f}".format(validation_acc)
+                    print("validation acc {:.4f}".format(validation_acc))
                 vals = []
 
                 '''TODO: Add other criteria for saving the best model.
@@ -203,7 +203,7 @@ class TheanoModel(object):
                 if not save_best and (iteration + 1) % 10 == 0:
                     self.freeze()
                 if ind != nb_epochs * nb_batches - 1:
-                    print "\niteration {} of {}".format(iteration + 1, nb_epochs)
+                    print("\niteration {} of {}".format(iteration + 1, nb_epochs))
         return best_acc
 
     def __get_costs(self, gen_x, gen_y):
@@ -246,9 +246,9 @@ class TheanoModel(object):
                                                              batch_fold)
         i = 0
         while batcher is not None:
-            print '\nRound {}'.format(i+1)
-            print '-' * 100
-            print '\niteration 1 of {}'.format(epoch_list[i])
+            print('\nRound {}'.format(i+1))
+            print('-' * 100)
+            print('\niteration 1 of {}'.format(epoch_list[i]))
             best_acc = self.__train_with_batcher(batcher,
                                                  x_validation,
                                                  y_validation,
@@ -268,7 +268,7 @@ class TheanoModel(object):
         np.save('distribution_parameters.npy', scheduler.get_dist_params())
 
     def predict(self, x):
-        print "Predict"
+        print("Predict")
         batch_engine = BatchFactory(
             batch_size=self.BATCH_SIZE, nb_samples=len(x), iterations=1, randomizer=False)
         batcher = batch_engine.generate_batch(X=x)
@@ -291,8 +291,8 @@ class TheanoModel(object):
     def param_summary(self):
         for param in self.params:
             if param.name.split('_')[0] == 'w':
-                print param.name + '\t\t\t\t' + str(param.get_value().shape)
-                print 100 * '-'
+                print(param.name + '\t\t\t\t' + str(param.get_value().shape))
+                print(100 * '-')
 
     @staticmethod
     def restore_params(file_name):
