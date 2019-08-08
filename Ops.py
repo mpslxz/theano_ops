@@ -21,6 +21,35 @@ def bn(inpt, scale=1.0, shift=0.0, trainable=False, layer_name='', init_params=N
     return T.nnet.batch_normalization(inputs=inpt, gamma=gamma, beta=beta, mean=mean, std=std)
 
 
+def conv_1d(inpt, filter_shapes, stride=1, layer_name='', mode='valid', init_params=None):
+    stride = (1, stride)
+    output_channel = filter_shapes[0]
+    input_channel = filter_shapes[1]
+    rows = 1
+    columns = filter_shapes[2]
+    if init_params is None:
+        filter_shape = (output_channel, input_channel, rows, columns)
+        receptive_field_size = rows * columns
+
+        w = theano.shared(np.asarray(
+            np.random.normal(
+                loc=0, scale=np.sqrt(2. / ((input_channel + output_channel) * receptive_field_size)),
+            size=filter_shape),
+            dtype=theano.config.floatX), name='w_conv1d_' + layer_name, borrow=True)
+
+        b = theano.shared(
+            np.asarray(
+                np.random.normal(
+                    loc=0.0, scale=1.0, size=(
+                        filter_shape[0],)), dtype=theano.config.floatX),
+            name='b_conv1d_' + layer_name, borrow=True)
+    else:
+        w = init_params[0]
+        b = init_params[1]
+    inpt = inpt.dimshuffle(0, 1, 'x', 2)
+    return (T.nnet.conv2d(input=inpt, filters=w, border_mode=mode, subsample=stride) + b.dimshuffle('x', 'x', 0, 'x'))[:, :, 0, :], [w, b]
+
+
 def conv_3d(inpt, filter_shapes, stride=(1, 1, 1), layer_name='', mode='valid', init_params=None):
     output_channel = filter_shapes[0]
     input_channel = filter_shapes[1]
