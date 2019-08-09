@@ -47,7 +47,7 @@ def conv_1d(inpt, filter_shapes, stride=1, layer_name='', mode='valid', init_par
         w = init_params[0]
         b = init_params[1]
     inpt = inpt.dimshuffle(0, 1, 'x', 2)
-    return (T.nnet.conv2d(input=inpt, filters=w, border_mode=mode, subsample=stride) + b.dimshuffle('x', 'x', 0, 'x'))[:, :, 0, :], [w, b]
+    return (T.nnet.conv2d(input=inpt, filters=w, border_mode=mode, subsample=stride) + b.dimshuffle('x', 0, 'x', 'x'))[:, :, 0, :], [w, b]
 
 
 def conv_3d(inpt, filter_shapes, stride=(1, 1, 1), layer_name='', mode='valid', init_params=None):
