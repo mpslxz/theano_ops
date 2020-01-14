@@ -60,11 +60,11 @@ class BatchFactory(object):
                 indices = np.random.permutation(self.nb_samples)
             else:
                 indices = np.arange(self.nb_samples)
-            for indexer in range(self.nb_samples/self.BATCH_SIZE):
-                yield indices[slice(indexer*self.BATCH_SIZE, (indexer+1)*self.BATCH_SIZE)]
+            for indexer in range(int(self.nb_samples/self.BATCH_SIZE)):
+                yield indices[slice(indexer*int(self.BATCH_SIZE), (indexer+1)*int(self.BATCH_SIZE))]
             if self.nb_samples % self.BATCH_SIZE != 0:
-                indexer = self.nb_samples / self.BATCH_SIZE
-                yield indices[slice(indexer*self.BATCH_SIZE, self.nb_samples)]
+                indexer = int(self.nb_samples / self.BATCH_SIZE)
+                yield indices[slice(indexer*int(self.BATCH_SIZE), self.nb_samples)]
 
     def generate_batch(self, X, Y=None):
         for samples in self._index_generator():
