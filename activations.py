@@ -23,3 +23,6 @@ def softmax(x):
 
 def softplus(x):
     return T.nnet.softplus(x)
+
+def linear(x):
+    return x
