@@ -57,7 +57,7 @@ def read_from_file(X, samples, Y=None, root_dir='.'):
             x.append(normalize(cv2.imread(os.path.join(root_dir, X[idx]), 0)))
         else:
             x.append(normalize(cv2.imread(os.path.join(root_dir, X[idx]), 0)))
-            y.append(cv2.imread(Y[idx], 0))
+            y.append(cv2.imread(os.path.join(rood_dir, Y[idx]), 0))
     if Y is None:
         return np.expand_dims(np.array(x), 1)
     return np.expand_dims(np.array(x),1), np.expand_dims(np.array(y),1)
@@ -90,9 +90,9 @@ class BatchFactory(object):
                 if not is_list:
                     yield X[samples]
                 else:
-                    yield read_from_file(X,samples, root_dir)
+                    yield read_from_file(X=X,samples=samples, root_dir=root_dir)
             else:
                 if not is_list:
                     yield X[samples], Y[samples]
                 else:
-                    yield read_from_file(X, Y, samples, root_dir)
+                    yield read_from_file(X=X, Y=Y, samples=samples, root_dir=root_dir)
