@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+import os
 
 
 def get_params(layer_name, param_list):
@@ -31,10 +32,10 @@ def downsample_volume(volume, ratio=0.5, axis=0):
     return np.array(downsampled)
 
 def normalize(nd_array):
-    if nd_array.std() == 0:
-        return nd_array
-    return (nd_array - nd_array.mean())/nd_array.std()
-    # return (nd_array - nd_array.min()) / (nd_array.max() - nd_array.min())
+    # if nd_array.std() == 0:
+    #     return nd_array
+    # return (nd_array - nd_array.mean())/nd_array.std()
+    return (nd_array - nd_array.min()) / (nd_array.max() - nd_array.min())
 
 def to_categorical(y, nb_classes=None):
     """From Keras
@@ -47,8 +48,23 @@ def to_categorical(y, nb_classes=None):
     categorical[np.arange(n), y] = 1
     return categorical
 
+
+def read_from_file(X, samples, Y=None, root_dir='.'):
+    x = []
+    y = []
+    for idx in samples:
+        if Y is None:
+            x.append(normalize(cv2.imread(os.path.join(root_dir, X[idx]), 0)))
+        else:
+            x.append(normalize(cv2.imread(os.path.join(root_dir, X[idx]), 0)))
+            y.append(cv2.imread(os.path.join(rood_dir, Y[idx]), 0))
+    if Y is None:
+        return np.expand_dims(np.array(x), 1)
+    return np.expand_dims(np.array(x),1), np.expand_dims(np.array(y),1)
+    
+
 class BatchFactory(object):
-    def __init__(self, batch_size, nb_samples, iterations, randomizer=True):
+    def __init__(self, batch_size, iterations,nb_samples=None, randomizer=True):
         self.BATCH_SIZE = batch_size
         self.nb_samples = nb_samples
         self.iterations = iterations
@@ -66,10 +82,17 @@ class BatchFactory(object):
                 indexer = int(self.nb_samples / self.BATCH_SIZE)
                 yield indices[slice(indexer*int(self.BATCH_SIZE), self.nb_samples)]
 
-    def generate_batch(self, X, Y=None):
+                
+    def generate_batch(self, X, Y=None, is_list=False, root_dir='.'):
+        self.nb_samples = len(X)
         for samples in self._index_generator():
             if Y is None:
-                yield X[samples]
+                if not is_list:
+                    yield X[samples]
+                else:
+                    yield read_from_file(X=X,samples=samples, root_dir=root_dir)
             else:
-                yield X[samples], Y[samples]
-
+                if not is_list:
+                    yield X[samples], Y[samples]
+                else:
+                    yield read_from_file(X=X, Y=Y, samples=samples, root_dir=root_dir)
