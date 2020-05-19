@@ -5,7 +5,7 @@ from theano.tensor.signal.pool import pool_2d as pool2d, pool_3d as pool3d
 from theano.tensor import shared_randomstreams
 
 
-def bn(inpt, scale=1.0, shift=0.0, trainable=False, layer_name='', init_params=None):
+def bn(inpt, scale=1.0, shift=0.0, layer_name='', init_params=None):
     if init_params is None:
         gamma = theano.shared(np.asarray(scale * np.ones_like(
             inpt), dtype=theano.config.floatX), name='gamma_bn_' + layer_name)
@@ -16,9 +16,8 @@ def bn(inpt, scale=1.0, shift=0.0, trainable=False, layer_name='', init_params=N
         beta = init_params[1]
     mean = T.mean(inpt)
     std = T.std(inpt)
-    if trainable:
-        return T.nnet.batch_normalization(inputs=inpt, gamma=gamma, beta=beta, mean=mean, std=std), [gamma, beta]
-    return T.nnet.batch_normalization(inputs=inpt, gamma=gamma, beta=beta, mean=mean, std=std)
+    return T.nnet.batch_normalization(inputs=inpt, gamma=gamma, beta=beta, mean=mean, std=std), [gamma, beta]
+   
 
 
 def conv_1d(inpt, filter_shapes, stride=1, layer_name='', mode='valid', init_params=None):
@@ -140,11 +139,11 @@ def upsample_3d(inpt, ds):
 
 def upsample_2d(inpt, ds):
     one_dim = T.extra_ops.repeat(inpt, ds, 3)
-    return T.extra_ops.repeat(one_dim, ds, 2)
+    return T.extra_ops.repeat(one_dim, ds, 2), []
 
 
 def flatten(inpt, ndim=2):
-    return T.flatten(inpt, ndim)
+    return T.flatten(inpt, ndim), []
 
 
 def dense(inpt, nb_in, nb_out, layer_name='', init_params=None):
@@ -166,7 +165,7 @@ def dense(inpt, nb_in, nb_out, layer_name='', init_params=None):
 
 
 def pool_2d(input, ws, ignore_border=False, mode='max'):
-    return pool2d(input=input, ws=ws, ignore_border=ignore_border, mode=mode)
+    return pool2d(input=input, ws=ws, ignore_border=ignore_border, mode=mode), []
 
 
 def pool_3d(input, ws, ignore_border=False, mode='max'):
@@ -178,7 +177,7 @@ def dropout(inpt, prob=0.25):
         np.random.RandomState(0).randint(int(9e+5)))
     mask = rng.binomial(
         n=1, p=1 - prob, size=inpt.shape, dtype=theano.config.floatX)
-    return T.mul(inpt, mask)
+    return T.mul(inpt, mask), []
 
 
 def scale(inpt, scale=1.0, shift=0.0, layer_name='', init_params=None):
